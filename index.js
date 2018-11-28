@@ -1,13 +1,15 @@
+require('dotenv').load();
 const SlackBot = require('slackbots');
 
+
 const bot = new SlackBot({
-	token: '',
+	token: process.env.BOT_TOKEN,
 	name: 'snackbot'
 });
 
 let allUsers = []
 let snackCart = {}
-
+const channel = 'snackcart'
 // Start Handler
 bot.on('start', () => {
 	bot.getUsers().then((currentUsers) => {
@@ -15,7 +17,7 @@ bot.on('start', () => {
 	});
 	const params = {
 	};
-	bot.postMessageToChannel('general', 'Who\'s hungry , type `help` if you learn the commands', params);
+	bot.postMessageToChannel(channel, 'Who\'s hungry , type `help` if you learn the commands', params);
 });
 
 
@@ -23,7 +25,8 @@ bot.on('start', () => {
 bot.on('error', (err) => {
 	const params = {
 	};
-	bot.postMessageToChannel('general', 'Oh oh! someone crashed the snack cart, now nobody gets to eat', params);
+	// message doesnt run after bot crashes
+	bot.postMessageToChannel(channel, 'Oh oh! someone crashed the snack cart, now nobody gets to eat', params);
 	console.log(err)
 });
 
@@ -46,7 +49,7 @@ bot.on('message', (data) => {
 function handleMessage(userName, message) {
 	message = message.toLowerCase()
 	if (message.toLowerCase() === 'help') {
-		bot.postMessageToChannel('general',
+		bot.postMessageToChannel(channel,
 		'looks like you need help, here are some commands \n `add [item]` e.g. `add fruit roll ups` \n `remove [item]` e.g. `remove fruit roll ups` \n `show cart` shows all the current items in the cart \n `empty cart` Warning: will empty the entire cart');
 	}
 
@@ -64,13 +67,13 @@ function handleMessage(userName, message) {
 
 	if (message.includes('empty ')) {
 		snackCart = {}
-		bot.postMessageToChannel('general', `${userName} has emptied the cart`);
+		bot.postMessageToChannel(channel, `${userName} has emptied the cart`);
 	}
 
 	if (message.includes('show ')) {
 		console.log(snackCart)
 		if(Object.keys(snackCart).length === 0 && snackCart.constructor === Object) {
-			bot.postMessageToChannel('general', `The cart is currently empty. Use \`add\` to add items to the cart :pizza:`);
+			bot.postMessageToChannel(channel, `The cart is currently empty. Use \`add\` to add items to the cart :pizza:`);
 		} else {
 			displayCart()
 		}
@@ -80,13 +83,13 @@ function handleMessage(userName, message) {
 function addItemToCart(userName, itemToAdd) {
 	if (!snackCart.hasOwnProperty(userName)) {
 		snackCart[userName] = [itemToAdd];
-		bot.postMessageToChannel('general', `${userName} has added ${itemToAdd} to the cart`);
+		bot.postMessageToChannel(channel, `${userName} has added ${itemToAdd} to the cart`);
 	} else {
 		if (snackCart[userName].includes(itemToAdd)) {
-			bot.postMessageToChannel('general', `${userName}, you already have ${itemToAdd} in your cart`);
+			bot.postMessageToChannel(channel, `${userName}, you already have ${itemToAdd} in your cart`);
 		} else {
 			snackCart[userName] = snackCart[userName].concat(itemToAdd)
-			bot.postMessageToChannel('general', `${userName} has added ${itemToAdd} to the cart`);
+			bot.postMessageToChannel(channel, `${userName} has added ${itemToAdd} to the cart`);
 		}
 
 	}
@@ -96,12 +99,12 @@ function removeItemFromCart(userName, itemToRemove) {
 	if (snackCart.hasOwnProperty(userName)) {
 		if (snackCart[userName].includes(itemToRemove)) {
 			snackCart[userName] = snackCart[userName].filter((currentItem) => currentItem !== itemToRemove)
-			bot.postMessageToChannel('general', `${userName} has removed ${itemToRemove} from the cart`);
+			bot.postMessageToChannel(channel, `${userName} has removed ${itemToRemove} from the cart`);
 		} else {
-			bot.postMessageToChannel('general', `${userName}, you don't have ${itemToRemove} in your cart`);
+			bot.postMessageToChannel(channel, `${userName}, you don't have ${itemToRemove} in your cart`);
 		}
 	} else {
-		bot.postMessageToChannel('general', `${userName}, you have nothing in your cart type \`add ${itemToRemove}\` to add it to your cart`);
+		bot.postMessageToChannel(channel, `${userName}, you have nothing in your cart type \`add ${itemToRemove}\` to add it to your cart`);
 	}
 }
 
@@ -109,17 +112,17 @@ function displayCart() {
 	let formattedList;
 	Object.keys(snackCart).forEach(function(userName){
 		if (snackCart[userName].length === 0) {
-			bot.postMessageToChannel('general', `${userName} is too good for snacks`);
+			bot.postMessageToChannel(channel, `${userName} is too good for snacks`);
 		} else if (snackCart[userName].length === 1) {
 			formattedList = snackCart[userName][0]
-			bot.postMessageToChannel('general', `${userName} wants ${formattedList}`);
+			bot.postMessageToChannel(channel, `${userName} wants ${formattedList}`);
 		} else if (snackCart[userName].length === 2) {
 			formattedList = snackCart[userName].join(' and ')
-			bot.postMessageToChannel('general', `${userName} wants ${formattedList}`);
+			bot.postMessageToChannel(channel, `${userName} wants ${formattedList}`);
 		} else {
 			let listLength = snackCart[userName].length
 			formattedList = snackCart[userName].slice(0,listLength-1).join(', ') + ', and ' + snackCart[userName][listLength-1];
-			bot.postMessageToChannel('general', `${userName} wants ${formattedList}`);
+			bot.postMessageToChannel(channel, `${userName} wants ${formattedList}`);
 		}
 		formattedList = snackCart[userName].join(', ')
 
